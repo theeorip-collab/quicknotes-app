@@ -4,10 +4,11 @@ const noteCategory = document.querySelector("#note-category");
 const notesList = document.querySelector("#notes-list");
 const noteCount = document.querySelector("#note-count");
 const errorMessage = document.querySelector("#error-message");
+const searchInput = document.querySelector("#search-input");
 
-let notes = [];
+let notes = JSON.parse(localStorage.getItem("quickNotes")) || [];
 
-function render() {
+function render(notesToShow = notes) {
   notesList.textContent = "";
 
   if (notes.length === 0) {
@@ -18,7 +19,14 @@ function render() {
     noteCount.textContent = `You have ${notes.length} notes.`;
   }
 
-  notes.forEach((note) => {
+  if (notesToShow.length === 0 && searchInput.value.trim() !== "") {
+    const message = document.createElement("li");
+    message.textContent = "No notes match your search.";
+    notesList.appendChild(message);
+    return;
+  }
+
+  notesToShow.forEach((note) => {
     const li = document.createElement("li");
     li.classList.add("note-card");
     li.classList.add(`category-${note.category.toLowerCase()}`);
@@ -37,6 +45,7 @@ function render() {
 
     deleteButton.addEventListener("click", () => {
       notes = notes.filter((item) => item.id !== note.id);
+      localStorage.setItem("quickNotes", JSON.stringify(notes));
       render();
     });
 
@@ -77,7 +86,25 @@ form.addEventListener("submit", (event) => {
   };
 
   notes.push(note);
-  render();
+  localStorage.setItem("quickNotes", JSON.stringify(notes));
 
+  render();
   noteInput.value = "";
 });
+
+searchInput.addEventListener("input", () => {
+  const searchWords = searchInput.value.trim().toLowerCase();
+
+  if (searchWords === "") {
+    render();
+    return;
+  }
+
+  const filteredNotes = notes.filter((note) =>
+    note.text.toLowerCase().includes(searchWords)
+  );
+
+  render(filteredNotes);
+});
+
+render();
